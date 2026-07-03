@@ -1,0 +1,323 @@
+{
+  "activity_first_ts": "2026-07-03T04:59:19+00:00",
+  "activity_last_ts": "2026-07-03T06:15:31+00:00",
+  "activity_net_cashflow_usdc": 482.0697,
+  "activity_rows": 3500,
+  "buy_count": 3428,
+  "by_asset": [
+    {
+      "bucket": "btc",
+      "trade_count": 1303,
+      "trade_usdc": 20477.0569
+    },
+    {
+      "bucket": "sol",
+      "trade_count": 638,
+      "trade_usdc": 6022.6324
+    },
+    {
+      "bucket": "eth",
+      "trade_count": 977,
+      "trade_usdc": 4628.2455
+    },
+    {
+      "bucket": "xrp",
+      "trade_count": 510,
+      "trade_usdc": 3563.4303
+    }
+  ],
+  "by_hour_utc": [
+    {
+      "bucket": "05",
+      "trade_count": 2777,
+      "trade_usdc": 27464.0337
+    },
+    {
+      "bucket": "06",
+      "trade_count": 632,
+      "trade_usdc": 7168.8738
+    },
+    {
+      "bucket": "04",
+      "trade_count": 19,
+      "trade_usdc": 58.4576
+    }
+  ],
+  "by_interval": [
+    {
+      "bucket": "5m",
+      "trade_count": 2590,
+      "trade_usdc": 28649.923
+    },
+    {
+      "bucket": "15m",
+      "trade_count": 838,
+      "trade_usdc": 6041.4421
+    }
+  ],
+  "by_price_bucket": [
+    {
+      "bucket": "0.85-1.00",
+      "trade_count": 394,
+      "trade_usdc": 13963.4498
+    },
+    {
+      "bucket": "0.35-0.65",
+      "trade_count": 763,
+      "trade_usdc": 7150.5906
+    },
+    {
+      "bucket": "0.15-0.35",
+      "trade_count": 1204,
+      "trade_usdc": 6391.3073
+    },
+    {
+      "bucket": "0.65-0.85",
+      "trade_count": 243,
+      "trade_usdc": 5336.5765
+    },
+    {
+      "bucket": "0.05-0.15",
+      "trade_count": 635,
+      "trade_usdc": 1664.8885
+    },
+    {
+      "bucket": "0.00-0.05",
+      "trade_count": 189,
+      "trade_usdc": 184.5524
+    }
+  ],
+  "caveats": [
+    "positions_endpoint_is_a_snapshot_not_full_realized_pnl",
+    "redeem_merge_split_cashflows_must_be_reconciled_before_copytrading",
+    "public_activity_offset_is_capped_so_very_active_wallets_may_require_archival_collection"
+  ],
+  "last_30d_position_count": 319,
+  "last_30d_realized_pnl": 0.0,
+  "last_30d_realized_win_rate": null,
+  "losing_positions": 1658,
+  "merge_count": 0,
+  "name": "dgcf",
+  "position_cash_pnl": -152146.1073,
+  "position_current_value": 129.2912,
+  "position_initial_value": 152275.3983,
+  "position_pnl_by_asset": [
+    {
+      "asset": "btc",
+      "cash_pnl": -138089.7649,
+      "current_value": 62.1523,
+      "initial_value": 138151.9171,
+      "position_count": 1314,
+      "realized_pnl": 0.0
+    },
+    {
+      "asset": "eth",
+      "cash_pnl": -6545.0763,
+      "current_value": 40.1416,
+      "initial_value": 6585.2178,
+      "position_count": 184,
+      "realized_pnl": 0.0
+    },
+    {
+      "asset": "sol",
+      "cash_pnl": -4883.9273,
+      "current_value": 0.0,
+      "initial_value": 4883.9273,
+      "position_count": 80,
+      "realized_pnl": 0.0
+    },
+    {
+      "asset": "xrp",
+      "cash_pnl": -2235.808,
+      "current_value": 26.9973,
+      "initial_value": 2262.8053,
+      "position_count": 80,
+      "realized_pnl": 0.0
+    },
+    {
+      "asset": "atp",
+      "cash_pnl": -391.5308,
+      "current_value": 0.0,
+      "initial_value": 391.5308,
+      "position_count": 3,
+      "realized_pnl": 0.0
+    }
+  ],
+  "position_realized_pnl": 0.0,
+  "position_rows": 1661,
+  "profitable_positions": 3,
+  "pseudonym": "Mad-Plot",
+  "realized_losing_positions": 0,
+  "realized_profitable_positions": 0,
+  "redeem_count": 72,
+  "sell_count": 0,
+  "split_count": 0,
+  "top_markets_by_trade_usdc": [
+    {
+      "buy_usdc": 1964.4968,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783055700",
+      "title": "Bitcoin Up or Down - July 3, 1:15AM-1:20AM ET",
+      "trade_count": 99,
+      "trade_usdc": 1964.4968
+    },
+    {
+      "buy_usdc": 1963.768,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783058100",
+      "title": "Bitcoin Up or Down - July 3, 1:55AM-2:00AM ET",
+      "trade_count": 81,
+      "trade_usdc": 1963.768
+    },
+    {
+      "buy_usdc": 1921.8943,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783056000",
+      "title": "Bitcoin Up or Down - July 3, 1:20AM-1:25AM ET",
+      "trade_count": 102,
+      "trade_usdc": 1921.8943
+    },
+    {
+      "buy_usdc": 1855.0095,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783059000",
+      "title": "Bitcoin Up or Down - July 3, 2:10AM-2:15AM ET",
+      "trade_count": 65,
+      "trade_usdc": 1855.0095
+    },
+    {
+      "buy_usdc": 1652.0966,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783057200",
+      "title": "Bitcoin Up or Down - July 3, 1:40AM-1:45AM ET",
+      "trade_count": 113,
+      "trade_usdc": 1652.0966
+    },
+    {
+      "buy_usdc": 1633.07,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783058400",
+      "title": "Bitcoin Up or Down - July 3, 2:00AM-2:05AM ET",
+      "trade_count": 60,
+      "trade_usdc": 1633.07
+    },
+    {
+      "buy_usdc": 1423.0885,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783056600",
+      "title": "Bitcoin Up or Down - July 3, 1:30AM-1:35AM ET",
+      "trade_count": 72,
+      "trade_usdc": 1423.0885
+    },
+    {
+      "buy_usdc": 1049.7503,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783057800",
+      "title": "Bitcoin Up or Down - July 3, 1:50AM-1:55AM ET",
+      "trade_count": 84,
+      "trade_usdc": 1049.7503
+    },
+    {
+      "buy_usdc": 977.6262,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783055400",
+      "title": "Bitcoin Up or Down - July 3, 1:10AM-1:15AM ET",
+      "trade_count": 77,
+      "trade_usdc": 977.6262
+    },
+    {
+      "buy_usdc": 965.3795,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783054800",
+      "title": "Bitcoin Up or Down - July 3, 1:00AM-1:05AM ET",
+      "trade_count": 31,
+      "trade_usdc": 965.3795
+    },
+    {
+      "buy_usdc": 912.4342,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783057500",
+      "title": "Bitcoin Up or Down - July 3, 1:45AM-1:50AM ET",
+      "trade_count": 83,
+      "trade_usdc": 912.4342
+    },
+    {
+      "buy_usdc": 833.0554,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-15m-1783054800",
+      "title": "Bitcoin Up or Down - July 3, 1:00AM-1:15AM ET",
+      "trade_count": 48,
+      "trade_usdc": 833.0554
+    },
+    {
+      "buy_usdc": 822.7945,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783056900",
+      "title": "Bitcoin Up or Down - July 3, 1:35AM-1:40AM ET",
+      "trade_count": 72,
+      "trade_usdc": 822.7945
+    },
+    {
+      "buy_usdc": 804.6773,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-5m-1783056300",
+      "title": "Bitcoin Up or Down - July 3, 1:25AM-1:30AM ET",
+      "trade_count": 62,
+      "trade_usdc": 804.6773
+    },
+    {
+      "buy_usdc": 675.4983,
+      "sell_usdc": 0.0,
+      "slug": "sol-updown-5m-1783057800",
+      "title": "Solana Up or Down - July 3, 1:50AM-1:55AM ET",
+      "trade_count": 47,
+      "trade_usdc": 675.4983
+    },
+    {
+      "buy_usdc": 598.4685,
+      "sell_usdc": 0.0,
+      "slug": "btc-updown-15m-1783058400",
+      "title": "Bitcoin Up or Down - July 3, 2:00AM-2:15AM ET",
+      "trade_count": 64,
+      "trade_usdc": 598.4685
+    },
+    {
+      "buy_usdc": 596.9515,
+      "sell_usdc": 0.0,
+      "slug": "sol-updown-15m-1783057500",
+      "title": "Solana Up or Down - July 3, 1:45AM-2:00AM ET",
+      "trade_count": 51,
+      "trade_usdc": 596.9515
+    },
+    {
+      "buy_usdc": 589.4982,
+      "sell_usdc": 0.0,
+      "slug": "sol-updown-15m-1783055700",
+      "title": "Solana Up or Down - July 3, 1:15AM-1:30AM ET",
+      "trade_count": 49,
+      "trade_usdc": 589.4982
+    },
+    {
+      "buy_usdc": 577.8756,
+      "sell_usdc": 0.0,
+      "slug": "eth-updown-15m-1783054800",
+      "title": "Ethereum Up or Down - July 3, 1:00AM-1:15AM ET",
+      "trade_count": 41,
+      "trade_usdc": 577.8756
+    },
+    {
+      "buy_usdc": 562.6628,
+      "sell_usdc": 0.0,
+      "slug": "sol-updown-5m-1783056900",
+      "title": "Solana Up or Down - July 3, 1:35AM-1:40AM ET",
+      "trade_count": 42,
+      "trade_usdc": 562.6628
+    }
+  ],
+  "total_buy_usdc": 34691.3651,
+  "total_redeem_usdc": 35173.4348,
+  "total_sell_usdc": 0.0,
+  "total_trade_usdc": 34691.3651,
+  "trade_count": 3428,
+  "user": "0x27091ce48a08a3e21d63c42d33428cf1e55d20f5"
+}

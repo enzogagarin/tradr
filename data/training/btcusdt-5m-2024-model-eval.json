@@ -1,0 +1,21 @@
+{
+  "path": "data/training/btcusdt-5m-2024-training.csv",
+  "target": "label_next_1_up",
+  "rows": 105408,
+  "train_ready_rows": 105395,
+  "evaluated_rows": 105107,
+  "skipped_rows": 301,
+  "min_train_rows": 288,
+  "train_window_rows": 2016,
+  "model_accuracy": 0.5054,
+  "baseline_accuracy": 0.4994,
+  "model_brier": 0.26315188,
+  "baseline_brier": 0.25012726,
+  "model_log_loss": 0.72740236,
+  "baseline_log_loss": 0.69340191,
+  "brier_improvement": -0.01302462,
+  "mean_model_probability": 0.49786,
+  "mean_baseline_probability": 0.502199,
+  "decision": "no_measurable_predictive_edge",
+  "blocking_reasons": []
+}

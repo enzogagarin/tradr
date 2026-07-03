@@ -1,0 +1,21 @@
+{
+  "caveats": [
+    "realized_pnl_is_from_polymarket_positions_snapshot",
+    "onchain_usdc_redeem_merge_split_reconciliation_is_required_before_trading",
+    "patterns_are_descriptive_not_out_of_sample_signals"
+  ],
+  "decided_positions": 0,
+  "failure_patterns": [],
+  "last_30d_decided_positions": 0,
+  "last_30d_realized_pnl": 0,
+  "last_30d_win_rate": null,
+  "loser_positions": 0,
+  "pnl_patterns": [],
+  "position_rows": 1661,
+  "realized_pnl": 0,
+  "success_patterns": [],
+  "top_losing_positions": [],
+  "top_winning_positions": [],
+  "win_rate": null,
+  "winner_positions": 0
+}

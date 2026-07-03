@@ -1,0 +1,2 @@
+"""Static operator dashboard."""
+

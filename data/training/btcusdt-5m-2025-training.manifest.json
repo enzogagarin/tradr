@@ -1,0 +1,37 @@
+{
+  "history": {
+    "blocking_reasons": [],
+    "duplicate_open_time_count": 0,
+    "end_price": 87648.22,
+    "first_open_time": "2025-01-01T00:00:00+00:00",
+    "interval": "5m",
+    "interval_gap_count": 0,
+    "last_close_time": "2025-12-31T23:59:59.999000+00:00",
+    "max_abs_return_bps": 733.815789,
+    "mean_abs_return_bps": 8.893252,
+    "mean_return_bps": 0.003612,
+    "median_return_bps": 0.0,
+    "p90_abs_return_bps": 19.723377,
+    "path": "data/history/btcusdt-5m-2025.jsonl",
+    "realized_vol_bps": 14.094847,
+    "row_count": 105120,
+    "start_price": 93576.0,
+    "sufficient_for_baseline": true,
+    "symbol": "BTCUSDT",
+    "total_return_bps": -633.4722578438912,
+    "up_rate": 0.4982
+  },
+  "manifest_path": "data/training/btcusdt-5m-2025-training.manifest.json",
+  "training": {
+    "blocking_reasons": [
+      "missing_forward_label",
+      "missing_previous_close"
+    ],
+    "first_open_time": "2025-01-01T00:00:00+00:00",
+    "last_open_time": "2025-12-31T23:55:00+00:00",
+    "path": "data/training/btcusdt-5m-2025-training.csv",
+    "rows": 105120,
+    "train_ready_ratio": 0.9999,
+    "train_ready_rows": 105107
+  }
+}

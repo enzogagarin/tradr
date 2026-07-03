@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BTC Bot · Live Paper Desk</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"></noscript>
+    <link rel="stylesheet" href="/styles.css?v=20260703f">
+  </head>
+  <body>
+    <div class="scanline"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark">₿</span>
+        <div class="brand-text">
+          <div class="brand-title">BTC Paper Desk</div>
+          <div class="brand-sub">Up / Down · 5m cycle</div>
+        </div>
+      </div>
+
+      <div class="ticker" id="tickerWrap">
+        <div class="ticker-label">BTC / USDT</div>
+        <div class="ticker-price" id="btcPrice">--</div>
+        <div class="ticker-change" id="btcChange">--</div>
+      </div>
+
+      <div class="top-actions">
+        <span class="conn" id="conn"><span class="conn-dot"></span><span id="connText">LIVE</span></span>
+        <button class="btn" id="pauseButton" type="button">Pause</button>
+        <button class="btn ghost" id="refreshButton" type="button" title="Refresh now">↻</button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <!-- Market header -->
+      <section class="market-head">
+        <div class="market-info">
+          <div class="market-q" id="question">Loading market…</div>
+          <div class="chips">
+            <span class="chip" id="modeChip">--</span>
+            <span class="chip" id="stateSource">state --</span>
+            <span class="chip" id="bookSource">book --</span>
+            <span class="chip" id="scheduleReason">schedule --</span>
+          </div>
+        </div>
+        <div class="countdown">
+          <svg viewBox="0 0 120 120" class="cd-ring">
+            <circle class="cd-bg" cx="60" cy="60" r="52"></circle>
+            <circle class="cd-fg" id="cdRing" cx="60" cy="60" r="52"></circle>
+          </svg>
+          <div class="cd-center">
+            <strong id="countdownText">--</strong>
+            <span>to close</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Bot activity status -->
+      <section class="activity">
+        <div class="act-main">
+          <span class="act-dot" id="actDot"></span>
+          <div class="act-text">
+            <div class="act-state" id="actState">STARTING</div>
+            <div class="act-narr" id="actNarr">Connecting to bot…</div>
+          </div>
+        </div>
+        <div class="act-stats">
+          <div class="act-stat"><span>Started</span><strong id="actStarted">--</strong></div>
+          <div class="act-stat"><span>Uptime</span><strong id="actUptime">--</strong></div>
+          <div class="act-stat"><span>Last action</span><strong id="actLast">--</strong></div>
+          <div class="act-stat"><span>Cadence</span><strong id="actRate">--</strong></div>
+        </div>
+      </section>
+
+      <!-- Outcome + decision -->
+      <section class="grid-top">
+        <div class="outcomes">
+          <button class="oc oc-up selected" id="selectUp" type="button" data-outcome="UP">
+            <div class="oc-top">
+              <span class="oc-name">UP</span>
+              <span class="oc-prob" id="upProb">--</span>
+            </div>
+            <div class="oc-bar"><i id="upBar"></i></div>
+            <div class="oc-foot">
+              <span>ask <b id="upAsk">--</b></span>
+              <span>bid <b id="upBid">--</b></span>
+              <span id="upDepth">depth --</span>
+            </div>
+          </button>
+
+          <button class="oc oc-down" id="selectDown" type="button" data-outcome="DOWN">
+            <div class="oc-top">
+              <span class="oc-name">DOWN</span>
+              <span class="oc-prob" id="downProb">--</span>
+            </div>
+            <div class="oc-bar"><i id="downBar"></i></div>
+            <div class="oc-foot">
+              <span>ask <b id="downAsk">--</b></span>
+              <span>bid <b id="downBid">--</b></span>
+              <span id="downDepth">depth --</span>
+            </div>
+          </button>
+        </div>
+
+        <article class="panel decision">
+          <div class="panel-head">
+            <span class="label">Bot decision</span>
+            <span class="pill" id="signalBadge">waiting</span>
+          </div>
+          <div class="decision-body">
+            <div class="gauge-wrap">
+              <canvas id="probabilityGauge" width="240" height="150"></canvas>
+              <div class="gauge-center">
+                <span>P(up)</span>
+                <strong id="probability">--</strong>
+              </div>
+            </div>
+            <div class="decision-side">
+              <div class="action-line" id="action">--</div>
+              <div class="metric-row">
+                <div class="metric"><span>Edge</span><strong id="edge">--</strong></div>
+                <div class="metric"><span>Target</span><strong id="targetPrice">--</strong></div>
+              </div>
+              <div class="explain" id="plainReason">Waiting for snapshot…</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- KPI strip -->
+      <section class="kpis">
+        <div class="kpi kpi-pnl">
+          <span>Est. P&amp;L</span>
+          <strong id="kpiPnl">--</strong>
+        </div>
+        <div class="kpi">
+          <span>Win rate</span>
+          <strong id="kpiWinRate">--</strong>
+        </div>
+        <div class="kpi">
+          <span>Trades</span>
+          <strong id="kpiTrades">--</strong>
+        </div>
+        <div class="kpi">
+          <span>Fills</span>
+          <strong id="kpiFills">--</strong>
+        </div>
+        <div class="kpi">
+          <span>Notional</span>
+          <strong id="kpiNotional">--</strong>
+        </div>
+        <div class="kpi">
+          <span>Wallet boost</span>
+          <strong id="kpiWallet">--</strong>
+        </div>
+      </section>
+
+      <!-- Charts -->
+      <section class="grid-charts">
+        <article class="panel">
+          <div class="panel-head">
+            <span class="label">Equity curve · estimated P&amp;L</span>
+            <span class="mini" id="equityLast">--</span>
+          </div>
+          <div class="chart-box"><canvas id="equityChart"></canvas></div>
+        </article>
+        <article class="panel">
+          <div class="panel-head">
+            <span class="label">BTC path vs resolution reference</span>
+            <span class="mini"><i class="dot blue"></i>mid <i class="dot amber"></i>ref</span>
+          </div>
+          <div class="chart-box"><canvas id="btcChart"></canvas></div>
+        </article>
+      </section>
+
+      <!-- Tabs -->
+      <section class="panel tabwrap">
+        <div class="tabs">
+          <button class="tab active" data-tab="feedPane" type="button">Live feed</button>
+          <button class="tab" data-tab="booksPane" type="button">Order book</button>
+          <button class="tab" data-tab="riskPane" type="button">Risk</button>
+          <button class="tab" data-tab="walletPane" type="button">Wallet signal</button>
+        </div>
+
+        <div class="tab-content active" id="feedPane">
+          <div class="feed-filters">
+            <button class="fbtn active" data-filter="all" type="button">All</button>
+            <button class="fbtn" data-filter="trades" type="button">Trades</button>
+            <button class="fbtn" data-filter="skips" type="button">No-trade</button>
+            <span class="feed-count" id="feedCount"></span>
+          </div>
+          <div class="feed-head">
+            <span>Time</span><span>Action</span><span>Edge</span><span>BTC</span>
+            <span>Status</span><span>P&amp;L</span>
+          </div>
+          <div id="tradeFeed" class="feed"></div>
+        </div>
+
+        <div class="tab-content" id="booksPane">
+          <div class="books">
+            <div class="book">
+              <div class="panel-head"><span class="label">UP token</span><span class="mini" id="upSpread">spread --</span></div>
+              <div class="book-table" id="upBook"></div>
+            </div>
+            <div class="book">
+              <div class="panel-head"><span class="label">DOWN token</span><span class="mini" id="downSpread">spread --</span></div>
+              <div class="book-table" id="downBook"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="riskPane">
+          <div class="risk-grid">
+            <div class="risk-card">
+              <span>Risk state</span>
+              <strong id="risk">--</strong>
+              <p id="riskReason" class="mini">--</p>
+            </div>
+            <div class="risk-card">
+              <span>Market exposure</span>
+              <strong id="marketExposure">--</strong>
+            </div>
+            <div class="risk-card">
+              <span>Trades in market</span>
+              <strong id="tradeCount">--</strong>
+            </div>
+            <div class="risk-card">
+              <span>Cycle</span>
+              <strong id="cyclePhase">--</strong>
+              <p id="cycleDetail" class="mini">--</p>
+            </div>
+            <div class="risk-card wide">
+              <span>Limits</span>
+              <strong id="limits" class="small">--</strong>
+            </div>
+          </div>
+          <div class="guardrails" id="guardrails"></div>
+        </div>
+
+        <div class="tab-content" id="walletPane">
+          <div class="risk-grid">
+            <div class="risk-card">
+              <span>Signal</span>
+              <strong id="walletEnabled">--</strong>
+            </div>
+            <div class="risk-card">
+              <span>Mode</span>
+              <strong id="walletMode">--</strong>
+            </div>
+            <div class="risk-card">
+              <span>Enhanced edge</span>
+              <strong id="walletEdge">--</strong>
+            </div>
+            <div class="risk-card wide">
+              <span>Report path</span>
+              <strong id="walletPath" class="small mono">--</strong>
+            </div>
+            <div class="risk-card wide">
+              <span>Decision reason</span>
+              <strong id="walletReason" class="small mono">--</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="foot">Paper trading only · demo resolution estimate · not financial advice</footer>
+    </main>
+
+    <script src="/app.js?v=20260703f"></script>
+  </body>
+</html>
