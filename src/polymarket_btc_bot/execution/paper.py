@@ -37,6 +37,8 @@ class PaperFill:
     notional: float
     liquidity: str
     filled_ts: datetime
+    fees: float = 0.0
+    levels_used: int = 1
 
     def to_dict(self) -> dict:
         return {
@@ -45,6 +47,8 @@ class PaperFill:
             "notional": self.notional,
             "liquidity": self.liquidity,
             "filled_ts": self.filled_ts.isoformat(),
+            "fees": self.fees,
+            "levels_used": self.levels_used,
         }
 
 
@@ -67,6 +71,19 @@ class PaperExecutionResult:
 
 
 class PaperExecutor:
+    """Simulate a taker order crossing the book.
+
+    A realistic paper fill walks multiple ask levels (so larger orders pay a
+    worse VWAP), applies a slippage penalty per fill (a proxy for quote/latency
+    drift), and charges a taker fee on notional. With the zero defaults it
+    reduces to a top-of-book fill.
+    """
+
+    def __init__(self, fee_bps: float = 0.0, slippage: float = 0.0, max_levels: int = 5) -> None:
+        self.fee_bps = max(0.0, fee_bps)
+        self.slippage = max(0.0, slippage)
+        self.max_levels = max(1, max_levels)
+
     def reject(self, reason: str) -> PaperExecutionResult:
         return PaperExecutionResult("REJECTED", reason, None, None, utc_now())
 
@@ -93,9 +110,34 @@ class PaperExecutor:
             return PaperExecutionResult("REJECTED", "best_ask_above_limit", None, None, now)
 
         requested_shares = round(max_order_notional / decision.target_price, 6)
-        fill_shares = round(min(requested_shares, ask.size), 6)
-        if fill_shares <= 0:
+
+        # Walk ask levels (ascending) up to the limit price, accumulating a VWAP.
+        asks = sorted(book.asks, key=lambda level: level.price)
+        remaining = requested_shares
+        filled_shares = 0.0
+        gross_cost = 0.0
+        levels_used = 0
+        for level in asks[: self.max_levels]:
+            if remaining <= 0:
+                break
+            fill_price = min(0.999, level.price + self.slippage)
+            if fill_price > decision.target_price:
+                break
+            take = min(remaining, level.size)
+            if take <= 0:
+                continue
+            gross_cost += take * fill_price
+            filled_shares += take
+            remaining -= take
+            levels_used += 1
+
+        filled_shares = round(filled_shares, 6)
+        if filled_shares <= 0:
             return PaperExecutionResult("REJECTED", "zero_fill_size", None, None, now)
+
+        avg_price = gross_cost / filled_shares
+        notional = round(gross_cost, 4)
+        fees = round(notional * self.fee_bps / 10_000.0, 6)
 
         order = PaperOrder(
             client_order_id=_client_order_id(now, outcome),
@@ -108,14 +150,17 @@ class PaperExecutor:
             created_ts=now,
         )
         fill = PaperFill(
-            price=round(ask.price, 4),
-            shares=fill_shares,
-            notional=round(fill_shares * ask.price, 4),
-            liquidity="TAKER_TOP_OF_BOOK",
+            price=round(avg_price, 4),
+            shares=filled_shares,
+            notional=notional,
+            liquidity="TAKER_MULTI_LEVEL" if levels_used > 1 else "TAKER_TOP_OF_BOOK",
             filled_ts=now,
+            fees=fees,
+            levels_used=levels_used,
         )
-        status = "FILLED" if fill_shares == requested_shares else "PARTIAL_FILL"
-        return PaperExecutionResult(status, "simulated_top_of_book_fill", order, fill, now)
+        status = "FILLED" if filled_shares >= requested_shares - 1e-9 else "PARTIAL_FILL"
+        reason = "simulated_multi_level_fill" if levels_used > 1 else "simulated_top_of_book_fill"
+        return PaperExecutionResult(status, reason, order, fill, now)
 
 
 def _client_order_id(now: datetime, outcome: str) -> str:

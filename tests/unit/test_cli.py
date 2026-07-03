@@ -542,3 +542,49 @@ def test_performance_report_pending_when_candle_open(tmp_path):
     assert report["resolved_trades"] == 0
     assert report["pending_trades"] == 1
     assert report["estimated_pnl"] == 0.0
+
+
+def test_performance_report_prefers_ledger_money_state(tmp_path):
+    from datetime import UTC, datetime, timedelta
+
+    from polymarket_btc_bot.dashboard.server import _merge_ledger_performance
+    from polymarket_btc_bot.portfolio import PortfolioLedger
+
+    ledger_path = tmp_path / "ledger.json"
+    now = datetime.now(tz=UTC)
+    ledger = PortfolioLedger.load(ledger_path, starting_bankroll=1000)
+    ledger.record_fill(
+        market_id="m1",
+        slug="btc-updown-5m-test",
+        outcome="UP",
+        asset_id="up",
+        shares=10,
+        price=0.40,
+        fees=0.01,
+        end_ts=now - timedelta(minutes=1),
+        cycle_open_epoch=int(now.timestamp()) - 300,
+        reference_open=100.0,
+        now=now - timedelta(minutes=2),
+    )
+    ledger.settle_due(now, resolver=lambda _position: True)
+
+    report = _merge_ledger_performance(
+        {
+            "total_trades": 0,
+            "total_fills": 0,
+            "total_fill_notional": 0,
+            "estimated_pnl": 0,
+            "resolved_trades": 0,
+            "pending_trades": 0,
+            "wins": 0,
+            "losses": 0,
+            "win_rate": 0,
+            "equity_curve": [],
+        },
+        ledger_path,
+    )
+
+    assert report["total_trades"] == 1
+    assert report["estimated_pnl"] == 5.99
+    assert report["wins"] == 1
+    assert report["portfolio"]["equity"] == 1005.99

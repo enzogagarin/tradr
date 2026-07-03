@@ -14,6 +14,7 @@ from typing import Any
 from polymarket_btc_bot.audit import AuditLog, default_audit_path
 from polymarket_btc_bot.config import BotSettings
 from polymarket_btc_bot.paper import PaperAnalyst
+from polymarket_btc_bot.portfolio import PortfolioLedger, default_ledger_path
 
 
 # Reuse one analyst per settings object so the wallet opportunity report is
@@ -233,7 +234,7 @@ def build_performance_report(
             }
         )
     resolved = wins + losses
-    return {
+    report = {
         "total_decisions": len(decisions),
         "total_trades": len(trades),
         "total_fills": len(fills),
@@ -271,6 +272,59 @@ def build_performance_report(
             for e in reversed(decisions[-30:])
         ],
     }
+    if audit_path is None:
+        report = _merge_ledger_performance(report, default_ledger_path())
+    return report
+
+
+def _merge_ledger_performance(report: dict[str, Any], ledger_path: Path) -> dict[str, Any]:
+    """Prefer the persistent paper portfolio for PnL/exposure KPIs.
+
+    The audit log still powers activity/recent-decision UX, but the ledger is
+    the source of truth for money because it records fees, fills, open
+    positions, and real settlements.
+    """
+    if not ledger_path.exists():
+        return report
+    ledger = PortfolioLedger.load(ledger_path)
+    if not ledger.positions:
+        return report
+
+    settled = [p for p in ledger.positions if p.status == "SETTLED"]
+    open_positions = [p for p in ledger.positions if p.status == "OPEN"]
+    wins = sum(1 for p in settled if p.won)
+    losses = sum(1 for p in settled if p.won is False)
+    running = 0.0
+    equity_curve: list[dict[str, Any]] = []
+    for pos in sorted(settled, key=lambda p: p.settled_ts or p.opened_ts):
+        running += pos.realized_pnl
+        equity_curve.append(
+            {
+                "ts": pos.settled_ts or pos.opened_ts,
+                "pnl": round(pos.realized_pnl, 2),
+                "equity": round(running, 2),
+                "won": pos.won,
+                "action": f"BUY_{pos.outcome}",
+            }
+        )
+
+    summary = ledger.summary()
+    report.update(
+        {
+            "total_trades": len(ledger.positions),
+            "total_fills": len(ledger.positions),
+            "total_fill_notional": round(sum(p.cost for p in ledger.positions), 2),
+            "estimated_pnl": round(summary["realized_pnl"], 2),
+            "resolved_trades": len(settled),
+            "pending_trades": len(open_positions),
+            "wins": wins,
+            "losses": losses,
+            "win_rate": round(wins / max(1, wins + losses), 4),
+            "equity_curve": equity_curve[-120:],
+            "portfolio": summary,
+        }
+    )
+    return report
 
 
 class DashboardHandler(SimpleHTTPRequestHandler):

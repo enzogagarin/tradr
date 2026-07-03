@@ -197,7 +197,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         audit_log = AuditLog()
         iterations = args.iterations if not args.loop else 10**9
         for index in range(iterations):
-            snapshot = analyst.snapshot()
+            # paper-run is the executing loop: persist settles + records fills.
+            snapshot = analyst.snapshot(persist=True)
             summary = _paper_summary(snapshot)
             if not args.no_audit:
                 audit_path = audit_log.append(_audit_event(snapshot, summary))

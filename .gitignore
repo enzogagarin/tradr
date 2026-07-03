@@ -8,6 +8,7 @@ __pycache__/
 .env.*
 !.env.example
 data/audit/
+data/portfolio/
 logs/
 *.db
 *.sqlite

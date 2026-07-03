@@ -26,6 +26,20 @@ def _inputs(reference_price=100.0, btc_price=100.2, up_ask=0.56, down_ask=0.45, 
     )
 
 
+def _inputs_with_old_books():
+    inputs = _inputs()
+    old = datetime.now(tz=UTC) - timedelta(seconds=60)
+    return StrategyInputs(
+        market=inputs.market,
+        btc_tick=inputs.btc_tick,
+        up_book=OrderBook("up", (OrderBookLevel(0.54, 100),), (OrderBookLevel(0.56, 100),), old),
+        down_book=inputs.down_book,
+        reference_price=inputs.reference_price,
+        tradable=inputs.tradable,
+        schedule_reason=inputs.schedule_reason,
+    )
+
+
 def test_baseline_strategy_buys_up_when_edge_passes():
     decision = BaselineProbabilityStrategy(min_edge=0.02).evaluate(_inputs())
 
@@ -39,3 +53,9 @@ def test_baseline_strategy_no_trade_when_not_tradable():
     assert decision.action == "NO_TRADE"
     assert decision.reason == "active_market_tradable"
 
+
+def test_baseline_strategy_blocks_stale_orderbook():
+    decision = BaselineProbabilityStrategy(max_book_age=timedelta(seconds=10)).evaluate(_inputs_with_old_books())
+
+    assert decision.action == "NO_TRADE"
+    assert decision.reason == "stale_up_orderbook"

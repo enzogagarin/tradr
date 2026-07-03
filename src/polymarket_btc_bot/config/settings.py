@@ -22,6 +22,23 @@ class BotSettings:
     max_trades_per_market: int = 20
     market_entry_cutoff_seconds: int = 90
     kill_switch: bool = False
+    portfolio_ledger_path: str = "data/portfolio/ledger.json"
+    starting_bankroll: float = 1000.0
+    strategy_min_edge: float = 0.03
+    strategy_max_spread: float = 0.04
+    strategy_market_blend_weight: float = 0.5
+    strategy_min_divergence: float = 0.05
+    strategy_assumed_volatility: float = 0.0018
+    strategy_use_realized_vol: bool = True
+    strategy_max_book_age_seconds: int = 10
+    exec_fee_bps: float = 0.0
+    exec_slippage: float = 0.003
+    exec_max_levels: int = 5
+    position_sizing_enabled: bool = True
+    position_bankroll_fraction: float = 0.02
+    position_min_notional: float = 5.0
+    position_edge_scale: float = 0.10
+    position_volatility_target: float = 0.0018
     cycle_mode_enabled: bool = False
     cycle_length_seconds: int = 600
     cycle_analysis_seconds: int = 180
@@ -60,6 +77,32 @@ class BotSettings:
             raise ValueError("max_trades_per_market must be positive")
         if self.market_entry_cutoff_seconds < 0:
             raise ValueError("market_entry_cutoff_seconds cannot be negative")
+        if self.starting_bankroll <= 0:
+            raise ValueError("starting_bankroll must be positive")
+        if self.strategy_min_edge <= 0:
+            raise ValueError("strategy_min_edge must be positive")
+        if self.strategy_market_blend_weight < 0 or self.strategy_market_blend_weight > 1:
+            raise ValueError("strategy_market_blend_weight must be between 0 and 1")
+        if self.strategy_min_divergence < 0:
+            raise ValueError("strategy_min_divergence cannot be negative")
+        if self.strategy_assumed_volatility <= 0:
+            raise ValueError("strategy_assumed_volatility must be positive")
+        if self.strategy_max_book_age_seconds <= 0:
+            raise ValueError("strategy_max_book_age_seconds must be positive")
+        if self.exec_fee_bps < 0:
+            raise ValueError("exec_fee_bps cannot be negative")
+        if self.exec_slippage < 0:
+            raise ValueError("exec_slippage cannot be negative")
+        if self.exec_max_levels <= 0:
+            raise ValueError("exec_max_levels must be positive")
+        if self.position_bankroll_fraction <= 0 or self.position_bankroll_fraction > 1:
+            raise ValueError("position_bankroll_fraction must be in (0, 1]")
+        if self.position_min_notional < 0:
+            raise ValueError("position_min_notional cannot be negative")
+        if self.position_edge_scale <= 0:
+            raise ValueError("position_edge_scale must be positive")
+        if self.position_volatility_target <= 0:
+            raise ValueError("position_volatility_target must be positive")
         if self.cycle_length_seconds <= 0:
             raise ValueError("cycle_length_seconds must be positive")
         if self.cycle_analysis_seconds < 0:
@@ -128,6 +171,37 @@ def load_settings() -> BotSettings:
             os.getenv("MARKET_ENTRY_CUTOFF_SECONDS", str(BotSettings.market_entry_cutoff_seconds))
         ),
         kill_switch=_bool_from_env(os.getenv("KILL_SWITCH"), BotSettings.kill_switch),
+        portfolio_ledger_path=os.getenv("PORTFOLIO_LEDGER_PATH", BotSettings.portfolio_ledger_path),
+        starting_bankroll=float(os.getenv("STARTING_BANKROLL", str(BotSettings.starting_bankroll))),
+        strategy_min_edge=float(os.getenv("STRATEGY_MIN_EDGE", str(BotSettings.strategy_min_edge))),
+        strategy_max_spread=float(os.getenv("STRATEGY_MAX_SPREAD", str(BotSettings.strategy_max_spread))),
+        strategy_market_blend_weight=float(
+            os.getenv("STRATEGY_MARKET_BLEND_WEIGHT", str(BotSettings.strategy_market_blend_weight))
+        ),
+        strategy_min_divergence=float(os.getenv("STRATEGY_MIN_DIVERGENCE", str(BotSettings.strategy_min_divergence))),
+        strategy_assumed_volatility=float(
+            os.getenv("STRATEGY_ASSUMED_VOLATILITY", str(BotSettings.strategy_assumed_volatility))
+        ),
+        strategy_use_realized_vol=_bool_from_env(
+            os.getenv("STRATEGY_USE_REALIZED_VOL"), BotSettings.strategy_use_realized_vol
+        ),
+        strategy_max_book_age_seconds=int(
+            os.getenv("STRATEGY_MAX_BOOK_AGE_SECONDS", str(BotSettings.strategy_max_book_age_seconds))
+        ),
+        exec_fee_bps=float(os.getenv("EXEC_FEE_BPS", str(BotSettings.exec_fee_bps))),
+        exec_slippage=float(os.getenv("EXEC_SLIPPAGE", str(BotSettings.exec_slippage))),
+        exec_max_levels=int(os.getenv("EXEC_MAX_LEVELS", str(BotSettings.exec_max_levels))),
+        position_sizing_enabled=_bool_from_env(
+            os.getenv("POSITION_SIZING_ENABLED"), BotSettings.position_sizing_enabled
+        ),
+        position_bankroll_fraction=float(
+            os.getenv("POSITION_BANKROLL_FRACTION", str(BotSettings.position_bankroll_fraction))
+        ),
+        position_min_notional=float(os.getenv("POSITION_MIN_NOTIONAL", str(BotSettings.position_min_notional))),
+        position_edge_scale=float(os.getenv("POSITION_EDGE_SCALE", str(BotSettings.position_edge_scale))),
+        position_volatility_target=float(
+            os.getenv("POSITION_VOLATILITY_TARGET", str(BotSettings.position_volatility_target))
+        ),
         cycle_mode_enabled=_bool_from_env(os.getenv("CYCLE_MODE_ENABLED"), BotSettings.cycle_mode_enabled),
         cycle_length_seconds=int(os.getenv("CYCLE_LENGTH_SECONDS", str(BotSettings.cycle_length_seconds))),
         cycle_analysis_seconds=int(os.getenv("CYCLE_ANALYSIS_SECONDS", str(BotSettings.cycle_analysis_seconds))),

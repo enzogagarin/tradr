@@ -20,7 +20,8 @@ from polymarket_btc_bot.domain import (
     OrderBookLevel,
 )
 from polymarket_btc_bot.execution import PaperExecutor
-from polymarket_btc_bot.risk import RiskEngine, RiskLimits, RiskState
+from polymarket_btc_bot.portfolio import PortfolioLedger
+from polymarket_btc_bot.risk import PositionSizingConfig, RiskEngine, RiskLimits, RiskState, calculate_position_notional
 from polymarket_btc_bot.scheduler import CycleGate, CycleGateConfig, MarketScheduler
 from polymarket_btc_bot.strategy import BaselineProbabilityStrategy, StrategyInputs, WalletOpportunityOverlay, WalletSignalConfig
 
@@ -56,14 +57,35 @@ class PaperAnalyst:
                 max_trades=settings.cycle_max_trades,
             )
         )
-        self.strategy = strategy or BaselineProbabilityStrategy()
-        self.executor = executor or PaperExecutor()
+        self.strategy = strategy or BaselineProbabilityStrategy(
+            min_edge=settings.strategy_min_edge,
+            max_spread=settings.strategy_max_spread,
+            max_book_age=timedelta(seconds=settings.strategy_max_book_age_seconds),
+            assumed_5m_volatility=settings.strategy_assumed_volatility,
+            market_blend_weight=settings.strategy_market_blend_weight,
+            min_divergence=settings.strategy_min_divergence,
+        )
+        self.executor = executor or PaperExecutor(
+            fee_bps=settings.exec_fee_bps,
+            slippage=settings.exec_slippage,
+            max_levels=settings.exec_max_levels,
+        )
         self.risk_engine = risk_engine or RiskEngine()
         self.wallet_overlay = wallet_overlay or _wallet_overlay_from_settings(settings)
         self.market_data_mode = "live" if use_live_market_discovery is True else settings.market_data_mode
+        self.ledger_path = Path(settings.portfolio_ledger_path)
+        self._settlement_klines: tuple[int, dict[int, tuple[float, float, float]]] | None = None
+        self._vol_cache: tuple[int, float] | None = None
 
-    def snapshot(self) -> dict[str, Any]:
+    def snapshot(self, persist: bool = False) -> dict[str, Any]:
         now = datetime.now(tz=UTC)
+        # The ledger is the source of truth for exposure / PnL / trade counts.
+        # Reload from disk each call so the read-only dashboard sees fills that
+        # the executing loop wrote. Only persist=True runs settle + record.
+        ledger = PortfolioLedger.load(self.ledger_path, starting_bankroll=self.settings.starting_bankroll)
+        settled_now: list[Any] = []
+        if persist:
+            settled_now = ledger.settle_due(now, resolver=self._resolve_position)
         btc_tick = self._latest_btc_tick(now)
         market, state_source = self._select_market(now)
         schedule = self.scheduler.select([market], now)
@@ -73,6 +95,7 @@ class PaperAnalyst:
         )
         tradable = schedule.tradable and not self.settings.kill_switch and not state_source.startswith("live_unavailable")
 
+        volatility_5m = self._recent_5m_volatility(now) if self.settings.strategy_use_realized_vol else None
         baseline_decision = self.strategy.evaluate(
             StrategyInputs(
                 market=market,
@@ -82,6 +105,7 @@ class PaperAnalyst:
                 reference_price=reference_price,
                 tradable=tradable,
                 schedule_reason=_blocking_reason(self.settings.kill_switch, schedule.reason, state_source),
+                volatility_5m=volatility_5m,
             )
         )
         decision = self.wallet_overlay.apply(
@@ -93,7 +117,21 @@ class PaperAnalyst:
         )
         cycle_state = self.cycle_gate.evaluate(now)
         decision = self.cycle_gate.apply(decision, cycle_state)
-        risk_state = RiskState()
+        risk_state = ledger.risk_state_for(market.market_id, now)
+        portfolio_summary = ledger.summary(now)
+        requested_notional = calculate_position_notional(
+            decision,
+            equity=float(portfolio_summary.get("equity") or self.settings.starting_bankroll),
+            volatility_5m=volatility_5m,
+            config=PositionSizingConfig(
+                enabled=self.settings.position_sizing_enabled,
+                max_order_notional=self.settings.max_order_notional,
+                bankroll_fraction=self.settings.position_bankroll_fraction,
+                min_notional=self.settings.position_min_notional,
+                edge_scale=self.settings.position_edge_scale,
+                volatility_target=self.settings.position_volatility_target,
+            ),
+        )
         risk_validation = self.risk_engine.validate_order_intent(
             decision=decision,
             market=market,
@@ -105,7 +143,7 @@ class PaperAnalyst:
                 kill_switch=self.settings.kill_switch,
             ),
             state=risk_state,
-            requested_notional=self.settings.max_order_notional,
+            requested_notional=requested_notional,
         )
         if risk_validation.approved:
             execution = self.executor.execute(
@@ -114,6 +152,21 @@ class PaperAnalyst:
                 down_book=down_book,
                 max_order_notional=risk_validation.allowed_notional or self.settings.max_order_notional,
             )
+            if persist and execution.status in {"FILLED", "PARTIAL_FILL"} and execution.order and execution.fill:
+                cycle_epoch = int(market.start_ts.timestamp()) // 300 * 300
+                ledger.record_fill(
+                    market_id=market.market_id,
+                    slug=market.slug,
+                    outcome=execution.order.outcome,
+                    asset_id=execution.order.asset_id,
+                    shares=execution.fill.shares,
+                    price=execution.fill.price,
+                    fees=execution.fill.fees,
+                    end_ts=market.end_ts,
+                    cycle_open_epoch=cycle_epoch,
+                    reference_open=reference_price,
+                    now=now,
+                )
         else:
             execution = self.executor.reject(risk_validation.reason_code)
 
@@ -139,12 +192,16 @@ class PaperAnalyst:
                 "cycle": cycle_state.to_dict(),
                 "kill_switch": self.settings.kill_switch,
                 "max_order_notional": self.settings.max_order_notional,
+                "requested_order_notional": requested_notional,
+                "position_sizing_enabled": self.settings.position_sizing_enabled,
                 "max_market_exposure": self.settings.max_market_exposure,
                 "max_daily_loss": self.settings.max_daily_loss,
                 "max_trades_per_market": self.settings.max_trades_per_market,
                 "open_exposure": risk_state.open_exposure,
                 "daily_pnl": risk_state.daily_pnl,
                 "trades_in_market": risk_state.trades_in_market,
+                "portfolio": portfolio_summary,
+                "settled_this_tick": len(settled_now),
                 "risk_validation": risk_validation.to_dict(),
                 "wallet_signal_enabled": self.wallet_overlay.config.enabled,
                 "wallet_signal_mode": self.wallet_overlay.config.mode,
@@ -242,6 +299,59 @@ class PaperAnalyst:
         open_price = float(klines[-1].open)
         self._cycle_open_cache = (cycle_key, open_price)
         return open_price
+
+    def _settlement_map(self, now: datetime) -> dict[int, tuple[float, float, float]]:
+        """Map cycle-open-epoch -> (open, close, close_epoch) for recent 5m candles,
+        cached ~15s. Used to settle open positions against the real candle."""
+        bucket = int(now.timestamp() // 15)
+        if self._settlement_klines is not None and self._settlement_klines[0] == bucket:
+            return self._settlement_klines[1]
+        try:
+            klines = self.kline_client.get_klines(symbol="BTCUSDT", interval="5m", limit=288)
+        except Exception:
+            return self._settlement_klines[1] if self._settlement_klines else {}
+        mapping = {
+            int(k.open_time.timestamp()): (float(k.open), float(k.close), k.close_time.timestamp())
+            for k in klines
+        }
+        self._settlement_klines = (bucket, mapping)
+        return mapping
+
+    def _recent_5m_volatility(self, now: datetime) -> float | None:
+        """Realized per-5m volatility = stdev of recent 5m log returns (close/open).
+        Cached ~5 min. Falls back to None (static vol) on any failure."""
+        bucket = int(now.timestamp() // 300)
+        if self._vol_cache is not None and self._vol_cache[0] == bucket:
+            return self._vol_cache[1]
+        try:
+            klines = self.kline_client.get_klines(symbol="BTCUSDT", interval="5m", limit=144)
+        except Exception:
+            return self._vol_cache[1] if self._vol_cache else None
+        returns = []
+        for k in klines:
+            if k.open > 0 and k.close > 0:
+                returns.append(log(k.close / k.open))
+        if len(returns) < 20:
+            return None
+        mean_r = sum(returns) / len(returns)
+        var = sum((r - mean_r) ** 2 for r in returns) / (len(returns) - 1)
+        vol = sqrt(var)
+        vol = max(0.0003, min(0.02, vol))  # clamp to sane 5m range
+        self._vol_cache = (bucket, vol)
+        return vol
+
+    def _resolve_position(self, position: Any) -> bool | None:
+        """Resolve a BTC 5m position: True if UP (candle close>open), False if DOWN,
+        None if the candle for that cycle is not yet closed / not available."""
+        now = datetime.now(tz=UTC)
+        mapping = self._settlement_map(now)
+        candle = mapping.get(int(position.cycle_open_epoch))
+        if candle is None:
+            return None
+        open_price, close_price, close_epoch = candle
+        if close_epoch > now.timestamp():
+            return None
+        return close_price > open_price
 
 
 def _wallet_overlay_from_settings(settings: BotSettings) -> WalletOpportunityOverlay:
